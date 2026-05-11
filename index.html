@@ -1,0 +1,1766 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>V-OTA Phase 2 Stay + Play Prototype</title>
+<style>
+  :root {
+    --ink: #102033;
+    --muted: #68768a;
+    --line: #dde5ef;
+    --soft: #f5f8fb;
+    --teal: #08b99d;
+    --teal-dark: #049982;
+    --orange: #ff8a00;
+    --blue: #116ad8;
+    --green: #10a66a;
+    --danger: #e25454;
+    --shadow: 0 18px 50px rgba(26, 44, 70, .16);
+    --radius: 8px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    color: var(--ink);
+    background: #fff;
+    font-family: Inter, "Segoe UI", Arial, sans-serif;
+    font-size: 16px;
+  }
+
+  button, input, select { font: inherit; }
+
+  button {
+    border: 0;
+    cursor: pointer;
+  }
+
+  .topbar {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 20;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(255,255,255,.68));
+    backdrop-filter: blur(12px);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+    font-size: 24px;
+    color: #053892;
+    letter-spacing: -.2px;
+  }
+
+  .mark {
+    width: 22px;
+    height: 22px;
+    position: relative;
+  }
+
+  .mark::before,
+  .mark::after {
+    content: "";
+    position: absolute;
+    background: var(--teal);
+    transform: rotate(45deg);
+  }
+
+  .mark::before {
+    width: 18px;
+    height: 8px;
+    right: 0;
+    top: 2px;
+    border-radius: 2px;
+  }
+
+  .mark::after {
+    width: 9px;
+    height: 18px;
+    left: 2px;
+    bottom: 0;
+    background: #1677ff;
+    border-radius: 2px;
+  }
+
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 34px;
+    color: #24364d;
+    font-weight: 600;
+  }
+
+  .nav a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .login {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 42px;
+    padding: 0 20px;
+    border: 1px solid var(--teal);
+    color: var(--teal-dark);
+    border-radius: 999px;
+    background: rgba(255,255,255,.92);
+    font-weight: 700;
+  }
+
+  .hero {
+    min-height: 720px;
+    position: relative;
+    overflow: hidden;
+    background-image:
+      linear-gradient(180deg, rgba(255,255,255,.15), rgba(0,0,0,.08) 28%, rgba(0,0,0,.68)),
+      url("screencapture-vinpearlota-en-2026-05-11-14_48_11.png");
+    background-size: cover;
+    background-position: top center;
+  }
+
+  .hero::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0;
+    height: 38%;
+    background: linear-gradient(180deg, transparent, rgba(0,0,0,.62));
+  }
+
+  .shell {
+    width: min(1280px, calc(100% - 48px));
+    margin: 0 auto;
+  }
+
+  .search-wrap {
+    position: relative;
+    z-index: 3;
+    padding-top: 110px;
+  }
+
+  .product-tabs {
+    width: min(900px, 86vw);
+    margin: 0 auto -26px;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .tab {
+    min-height: 66px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: #fff;
+    color: #22334a;
+    font-weight: 700;
+    border-bottom: 3px solid transparent;
+  }
+
+  .tab.active {
+    color: var(--teal-dark);
+    border-bottom-color: var(--teal);
+  }
+
+  .tab .ico { font-size: 18px; }
+
+  .search-panel {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 58px 20px 20px;
+    background: rgba(249, 251, 254, .96);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+  }
+
+  .fields {
+    display: grid;
+    grid-template-columns: 1.2fr .65fr .65fr .9fr;
+    gap: 12px;
+  }
+
+  .field {
+    height: 76px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 18px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+
+  .field-icon {
+    width: 30px;
+    height: 30px;
+    color: var(--teal-dark);
+    display: grid;
+    place-items: center;
+    font-size: 22px;
+  }
+
+  .label {
+    display: block;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .field input,
+  .field select {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    color: var(--ink);
+    background: transparent;
+    font-weight: 700;
+    min-width: 0;
+  }
+
+  .search-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 18px;
+  }
+
+  .party-builder {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .counter {
+    min-height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 12px 14px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+
+  .counter strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 20px;
+  }
+
+  .counter-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .counter-actions button {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #eef8f6;
+    color: var(--teal-dark);
+    font-size: 20px;
+    font-weight: 900;
+  }
+
+  .primary {
+    height: 52px;
+    min-width: 310px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    background: linear-gradient(90deg, #0ca58e, #12c5aa);
+    color: #fff;
+    border-radius: 999px;
+    font-weight: 800;
+    box-shadow: 0 10px 24px rgba(8, 185, 157, .26);
+  }
+
+  .secondary {
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 16px;
+    color: var(--teal-dark);
+    background: #e7fbf7;
+    border-radius: 999px;
+    font-weight: 800;
+  }
+
+  .hero-copy {
+    position: absolute;
+    z-index: 2;
+    left: 50%;
+    bottom: 78px;
+    transform: translateX(-50%);
+    width: min(1280px, calc(100% - 48px));
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    align-items: end;
+    gap: 32px;
+    color: #fff;
+  }
+
+  .hero-copy h1 {
+    margin: 0;
+    font-size: clamp(40px, 6vw, 76px);
+    line-height: 1.05;
+    letter-spacing: 0;
+  }
+
+  .hero-copy p {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 800;
+    line-height: 1.5;
+  }
+
+  .main {
+    background: #fff;
+  }
+
+  .section {
+    padding: 54px 0;
+  }
+
+  .section.alt { background: var(--soft); }
+
+  .section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 26px;
+  }
+
+  .section-title {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 30px;
+    line-height: 1.2;
+  }
+
+  .section-title::before {
+    content: "";
+    width: 6px;
+    height: 26px;
+    border-radius: 999px;
+    background: var(--teal);
+  }
+
+  .section-sub {
+    max-width: 650px;
+    color: var(--muted);
+    line-height: 1.55;
+    margin: -12px 0 30px 20px;
+  }
+
+  .mode-switch {
+    display: inline-grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 4px;
+    background: #eef5f8;
+    border-radius: 999px;
+  }
+
+  .mode-switch button {
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 999px;
+    background: transparent;
+    color: #5a697d;
+    font-weight: 800;
+  }
+
+  .mode-switch button.active {
+    background: #fff;
+    color: var(--teal-dark);
+    box-shadow: 0 4px 14px rgba(13, 48, 77, .12);
+  }
+
+  .destination-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+  }
+
+  .destination {
+    height: 180px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #dfe7ee;
+    color: #fff;
+    isolation: isolate;
+  }
+
+  .destination::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg, transparent 30%, rgba(0,0,0,.65)),
+      var(--bg);
+    background-size: cover;
+    background-position: center;
+    transition: transform .25s ease;
+    z-index: -1;
+  }
+
+  .destination:hover::before { transform: scale(1.05); }
+
+  .destination span {
+    position: absolute;
+    left: 18px;
+    bottom: 16px;
+    font-size: 24px;
+    font-weight: 900;
+    text-shadow: 0 2px 8px rgba(0,0,0,.35);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+  }
+
+  .package-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 10px 28px rgba(22, 48, 78, .08);
+  }
+
+  .media {
+    position: relative;
+    height: 220px;
+    background: var(--bg);
+    background-size: cover;
+    background-position: center;
+  }
+
+  .media::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,.05), rgba(0,0,0,.28));
+  }
+
+  .badge {
+    position: absolute;
+    z-index: 1;
+    left: 14px;
+    top: 14px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 10px;
+    background: #fff;
+    color: var(--teal-dark);
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 900;
+    box-shadow: 0 8px 20px rgba(0,0,0,.18);
+  }
+
+  .saving {
+    position: absolute;
+    z-index: 1;
+    right: 14px;
+    top: 14px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 10px;
+    background: #fff3e0;
+    color: #c75b00;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .package-body {
+    padding: 18px;
+  }
+
+  .rating {
+    color: #ffb000;
+    letter-spacing: 1px;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+
+  .package-body h3 {
+    margin: 0 0 8px;
+    font-size: 20px;
+    line-height: 1.28;
+  }
+
+  .desc {
+    min-height: 48px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin: 0 0 14px;
+  }
+
+  .included {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    background: #eef8f6;
+    color: #087968;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .price-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: end;
+  }
+
+  .old {
+    color: var(--muted);
+    text-decoration: line-through;
+    font-size: 13px;
+  }
+
+  .price {
+    color: #f06418;
+    font-size: 24px;
+    font-weight: 900;
+    line-height: 1.1;
+  }
+
+  .micro {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 4px;
+  }
+
+  .choose {
+    height: 44px;
+    padding: 0 16px;
+    background: var(--ink);
+    color: #fff;
+    border-radius: 999px;
+    font-weight: 900;
+  }
+
+  .choose.selected {
+    background: var(--teal);
+  }
+
+  .journey {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 24px;
+    align-items: start;
+  }
+
+  .steps {
+    display: grid;
+    gap: 14px;
+  }
+
+  .step-item {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    gap: 14px;
+    align-items: center;
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .step-num {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    background: #eaf9f6;
+    color: var(--teal-dark);
+    border-radius: 50%;
+    font-weight: 900;
+  }
+
+  .step-item h3 {
+    margin: 0 0 4px;
+    font-size: 17px;
+  }
+
+  .step-item p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.45;
+  }
+
+  .status {
+    display: inline-flex;
+    min-width: 86px;
+    height: 30px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #f0f4f8;
+    color: #4b5d73;
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .summary {
+    position: sticky;
+    top: 92px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(20, 47, 77, .08);
+  }
+
+  .summary-head {
+    padding: 18px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .summary-head h3 {
+    margin: 0 0 6px;
+    font-size: 20px;
+  }
+
+  .summary-head p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.45;
+  }
+
+  .summary-body {
+    padding: 18px;
+  }
+
+  .line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+    color: #3e5068;
+  }
+
+  .line strong {
+    color: var(--ink);
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--line);
+    margin: 14px 0;
+  }
+
+  .total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 20px;
+    font-weight: 900;
+    margin-bottom: 16px;
+  }
+
+  .checkout {
+    width: 100%;
+    height: 48px;
+    color: #fff;
+    background: var(--teal);
+    border-radius: 999px;
+    font-weight: 900;
+  }
+
+  .checkout:disabled {
+    background: #c7d3de;
+    cursor: not-allowed;
+  }
+
+  .ops-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .metric {
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .metric span {
+    display: block;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .metric strong {
+    display: block;
+    margin-top: 8px;
+    font-size: 28px;
+  }
+
+  .metric.good strong { color: var(--green); }
+  .metric.warn strong { color: var(--orange); }
+
+  .drawer {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: none;
+    background: rgba(16, 32, 51, .48);
+  }
+
+  .drawer.open { display: block; }
+
+  .drawer-panel {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: min(520px, 100%);
+    background: #fff;
+    box-shadow: -20px 0 60px rgba(0,0,0,.18);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .drawer-top {
+    padding: 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .drawer-top h2 {
+    margin: 0 0 6px;
+    font-size: 24px;
+  }
+
+  .drawer-top p {
+    margin: 0;
+    color: var(--muted);
+  }
+
+  .close {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #f0f4f8;
+    color: #31445c;
+    font-size: 20px;
+  }
+
+  .drawer-content {
+    overflow: auto;
+    padding: 22px;
+  }
+
+  .checkout-card {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+
+  .checkout-card h3 {
+    margin: 0 0 12px;
+  }
+
+  .flow-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .flow-tabs button {
+    height: 42px;
+    border-radius: 999px;
+    background: #eef5f8;
+    color: #52647b;
+    font-weight: 900;
+  }
+
+  .flow-tabs button.active {
+    background: var(--teal);
+    color: #fff;
+  }
+
+  .flow-panel {
+    display: none;
+  }
+
+  .flow-panel.active {
+    display: block;
+  }
+
+  .use-steps {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .use-step {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+    padding: 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #f8fbfd;
+  }
+
+  .use-step b {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #eaf9f6;
+    color: var(--teal-dark);
+  }
+
+  .qr-area {
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr);
+    gap: 18px;
+    align-items: center;
+  }
+
+  .qr {
+    width: 140px;
+    height: 140px;
+    padding: 10px;
+    background:
+      linear-gradient(90deg, #111 10px, transparent 10px) 0 0 / 20px 20px,
+      linear-gradient(#111 10px, transparent 10px) 0 0 / 20px 20px,
+      #fff;
+    border: 10px solid #fff;
+    outline: 1px solid var(--line);
+  }
+
+  .flow-explainer {
+    margin: 14px 0 8px;
+    padding: 12px;
+    border: 1px solid #cfe6ff;
+    border-radius: 8px;
+    background: #f3f8ff;
+    color: #21476f;
+    line-height: 1.45;
+  }
+
+  .qr-stack {
+    display: grid;
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .qr-card {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fff;
+    padding: 12px;
+  }
+
+  .qr-card h4 {
+    margin: 0 0 10px;
+    font-size: 15px;
+  }
+
+  .qr-meta {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  .voucher-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .voucher {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px;
+    background: #f7fafc;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+
+  .footer {
+    padding: 42px 0;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+    gap: 32px;
+  }
+
+  .footer h3,
+  .footer h4 {
+    color: var(--ink);
+    margin: 0 0 12px;
+  }
+
+  .footer p {
+    margin: 0;
+    line-height: 1.55;
+  }
+
+  .toast {
+    position: fixed;
+    z-index: 70;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
+    min-width: 280px;
+    min-height: 48px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 18px;
+    background: var(--ink);
+    color: #fff;
+    border-radius: 999px;
+    box-shadow: var(--shadow);
+    font-weight: 800;
+  }
+
+  .toast.show { display: flex; }
+
+  @media (max-width: 980px) {
+    .topbar { padding: 0 18px; }
+    .nav { display: none; }
+    .product-tabs { grid-template-columns: repeat(3, 1fr); }
+    .fields { grid-template-columns: 1fr 1fr; }
+    .hero-copy { grid-template-columns: 1fr; }
+    .destination-row,
+    .grid,
+    .journey,
+    .ops-grid,
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+    .summary { position: static; }
+  }
+
+  @media (max-width: 640px) {
+    .shell { width: min(100% - 28px, 1280px); }
+    .topbar { height: 62px; }
+    .brand { font-size: 20px; }
+    .login { height: 36px; padding: 0 14px; }
+    .hero { min-height: 780px; }
+    .search-wrap { padding-top: 82px; }
+    .product-tabs { width: 100%; grid-template-columns: repeat(2, 1fr); }
+    .tab { min-height: 52px; font-size: 13px; }
+    .search-panel { padding-top: 42px; }
+    .fields,
+    .party-builder,
+    .destination-row,
+    .grid,
+    .journey,
+    .ops-grid,
+    .footer-grid,
+    .qr-area { grid-template-columns: 1fr; }
+    .primary { min-width: 0; width: 100%; }
+    .hero-copy {
+      bottom: 36px;
+      width: min(100% - 28px, 1280px);
+    }
+    .hero-copy h1 { font-size: 40px; }
+    .section { padding: 38px 0; }
+    .section-head { align-items: flex-start; flex-direction: column; }
+    .section-title { font-size: 25px; }
+    .step-item { grid-template-columns: 44px minmax(0, 1fr); }
+    .step-item .status { grid-column: 2; width: fit-content; }
+  }
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">V-OTA <span class="mark" aria-hidden="true"></span></div>
+    <nav class="nav" aria-label="Primary">
+      <a href="#stay-play">Hotel</a>
+      <a href="#packages">Experience</a>
+      <a href="#ops">Promotions</a>
+      <a href="#journey">News</a>
+    </nav>
+    <button class="login" type="button">Login</button>
+  </header>
+
+  <section class="hero">
+    <div class="shell search-wrap">
+      <div class="product-tabs" role="tablist" aria-label="Booking products">
+        <button class="tab" type="button"><span class="ico">▣</span>Hotel</button>
+        <button class="tab" type="button"><span class="ico">✈</span>Flight</button>
+        <button class="tab" type="button"><span class="ico">▣</span>Flight + Hotel</button>
+        <button class="tab" type="button"><span class="ico">✦</span>Experience</button>
+        <button class="tab" type="button"><span class="ico">▣</span>Event</button>
+        <button class="tab active" type="button"><span class="ico">★</span>Stay + Play</button>
+      </div>
+
+      <div class="search-panel">
+        <div class="fields">
+          <label class="field">
+            <span class="field-icon">⌖</span>
+            <span>
+              <span class="label">Location</span>
+              <select id="destination">
+                <option value="Phu Quoc">Phu Quoc</option>
+                <option value="Nha Trang">Nha Trang</option>
+              </select>
+            </span>
+          </label>
+          <label class="field">
+            <span class="field-icon">↦</span>
+            <span>
+              <span class="label">Check-in</span>
+              <input id="checkin" type="date" value="2026-05-12">
+            </span>
+          </label>
+          <label class="field">
+            <span class="field-icon">↤</span>
+            <span>
+              <span class="label">Check-out</span>
+              <input id="checkout" type="date" value="2026-05-13">
+            </span>
+          </label>
+          <label class="field">
+            <span class="field-icon">☻</span>
+            <span>
+              <span class="label">Preset</span>
+              <select id="party">
+                <option value="family">1 room, 2 adults, 2 children</option>
+                <option value="small-family">1 room, 2 adults, 1 child</option>
+                <option value="couple">1 room, 2 adults</option>
+                <option value="group">8 rooms, 24 pax group</option>
+              </select>
+            </span>
+          </label>
+        </div>
+        <div class="party-builder" id="partyBuilder">
+          <div class="counter">
+            <span><span class="label">Adults</span><strong id="adultCount">2</strong></span>
+            <span class="counter-actions">
+              <button type="button" data-counter="adults" data-delta="-1" aria-label="Decrease adults">−</button>
+              <button type="button" data-counter="adults" data-delta="1" aria-label="Increase adults">+</button>
+            </span>
+          </div>
+          <div class="counter">
+            <span><span class="label">Children</span><strong id="childCount">2</strong></span>
+            <span class="counter-actions">
+              <button type="button" data-counter="children" data-delta="-1" aria-label="Decrease children">−</button>
+              <button type="button" data-counter="children" data-delta="1" aria-label="Increase children">+</button>
+            </span>
+          </div>
+          <div class="counter">
+            <span><span class="label">Rooms</span><strong id="roomCount">1</strong></span>
+            <span class="counter-actions">
+              <button type="button" data-counter="rooms" data-delta="-1" aria-label="Decrease rooms">−</button>
+              <button type="button" data-counter="rooms" data-delta="1" aria-label="Increase rooms">+</button>
+            </span>
+          </div>
+        </div>
+        <div class="search-actions">
+          <button class="primary" type="button" id="searchBtn">⌕ Search Stay + Play</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-copy">
+      <h1>EXPERIENCE<br>COMPLETE TRAVEL</h1>
+      <p>Phase 2 prototype: hotel + VinWonders/Safari ticket, one checkout, voucher QR, redemption tracking.</p>
+    </div>
+  </section>
+
+  <main class="main">
+    <section class="section" id="stay-play">
+      <div class="shell">
+        <div class="section-head">
+          <h2 class="section-title">Where would you like to go today?</h2>
+          <div class="mode-switch" aria-label="Customer mode">
+            <button type="button" class="active" data-mode="family">Family</button>
+            <button type="button" data-mode="group">Group</button>
+          </div>
+        </div>
+        <p class="section-sub">Stay + Play is surfaced as a first-class product line, not a coupon. Users see destination, package inclusions, savings, and voucher rules before checkout.</p>
+
+        <div class="destination-row">
+          <button class="destination" type="button" data-destination="Nha Trang" style="--bg:url('screencapture-vinpearlota-en-2026-05-11-14_48_11.png')"><span>Nha Trang</span></button>
+          <button class="destination" type="button" data-destination="Phu Quoc" style="--bg:url('screencapture-vinpearlota-en-2026-05-11-14_48_11.png')"><span>Phu Quoc</span></button>
+          <button class="destination" type="button" data-destination="Ha Tinh" style="--bg:url('screencapture-vinpearlota-en-2026-05-11-14_48_11.png')"><span>Ha Tinh</span></button>
+          <button class="destination" type="button" data-destination="Hai Phong" style="--bg:url('screencapture-vinpearlota-en-2026-05-11-14_48_11.png')"><span>Hai Phong</span></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section alt" id="packages">
+      <div class="shell">
+        <div class="section-head">
+          <h2 class="section-title">Stay + Play packages</h2>
+          <button class="secondary" type="button" id="compareBtn">Compare savings</button>
+        </div>
+        <p class="section-sub">Each SKU has clear component rules: hotel room, tickets, validity window, refund policy, adult/child quantities, and expected savings.</p>
+
+        <div class="journey">
+          <div class="grid" id="packageGrid"></div>
+          <aside class="summary" aria-label="Booking summary">
+            <div class="summary-head">
+              <h3>Your trip builder</h3>
+              <p id="summaryIntro">Select a Stay + Play SKU to preview one-payment checkout and QR voucher issuance.</p>
+            </div>
+            <div class="summary-body">
+              <div id="summaryLines"></div>
+              <div class="divider"></div>
+              <div class="line"><span>Retail value</span><strong id="retailValue">0 VND</strong></div>
+              <div class="line"><span>Package saving</span><strong id="savingValue">0 VND</strong></div>
+              <div class="line"><span>VinClub earn</span><strong id="pointValue">0 pts</strong></div>
+              <div class="divider"></div>
+              <div class="total"><span>Total</span><span id="totalValue">0 VND</span></div>
+              <button class="checkout" type="button" id="checkoutBtn" disabled>Checkout</button>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="journey">
+      <div class="shell">
+        <div class="section-head">
+          <h2 class="section-title">Phase 2 customer journey</h2>
+          <button class="secondary" type="button" id="simulateBtn">Simulate booking</button>
+        </div>
+        <div class="steps">
+          <div class="step-item">
+            <div class="step-num">1</div>
+            <div>
+              <h3>Discovery on hotel PDP</h3>
+              <p>Badge and module show Hotel + VinWonders/Safari bundle with transparent savings.</p>
+            </div>
+            <span class="status" id="s1">Ready</span>
+          </div>
+          <div class="step-item">
+            <div class="step-num">2</div>
+            <div>
+              <h3>One checkout</h3>
+              <p>User pays once. System creates master booking plus hotel and ticket sub-vouchers.</p>
+            </div>
+            <span class="status" id="s2">Waiting</span>
+          </div>
+          <div class="step-item">
+            <div class="step-num">3</div>
+            <div>
+              <h3>Voucher center</h3>
+              <p>Hotel booking and attraction QR are grouped under one Stay + Play itinerary.</p>
+            </div>
+            <span class="status" id="s3">Waiting</span>
+          </div>
+          <div class="step-item">
+            <div class="step-num">4</div>
+            <div>
+              <h3>Gate redemption</h3>
+              <p>QR scan updates status once, prevents duplicate redemption, and feeds BI dashboard.</p>
+            </div>
+            <span class="status" id="s4">Waiting</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section alt" id="ops">
+      <div class="shell">
+        <div class="section-head">
+          <h2 class="section-title">Pilot dashboard</h2>
+          <button class="secondary" type="button" id="refreshBtn">Refresh pilot</button>
+        </div>
+        <div class="ops-grid">
+          <div class="metric good"><span>Attach rate</span><strong id="mAttach">18.2%</strong></div>
+          <div class="metric good"><span>Payment success</span><strong id="mPay">96.4%</strong></div>
+          <div class="metric good"><span>QR scan success</span><strong id="mQr">99.1%</strong></div>
+          <div class="metric warn"><span>CS contact rate</span><strong id="mCs">3.8%</strong></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="shell footer-grid">
+      <div>
+        <h3>VINPEARL JOINT STOCK COMPANY</h3>
+        <p>Phase 2 interactive prototype for Stay + Play MVP: Phu Quoc and Nha Trang, static SKU, family pricing, one checkout, QR redemption.</p>
+      </div>
+      <div>
+        <h4>CONTACT</h4>
+        <p>1900 23 23 89<br>callcenter@vinpearl.com</p>
+      </div>
+      <div>
+        <h4>ABOUT US</h4>
+        <p>Hotel<br>Experience<br>Promotion</p>
+      </div>
+      <div>
+        <h4>TERMS & POLICIES</h4>
+        <p>General Terms<br>Payment Rules<br>Refund Policy</p>
+      </div>
+    </div>
+  </footer>
+
+  <div class="drawer" id="drawer" aria-hidden="true">
+    <div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+      <div class="drawer-top">
+        <div>
+          <h2 id="drawerTitle">Stay + Play checkout</h2>
+          <p id="drawerSub">Review package, confirm policy, then issue vouchers.</p>
+        </div>
+        <button class="close" type="button" id="closeDrawer" aria-label="Close">×</button>
+      </div>
+      <div class="drawer-content" id="drawerContent"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+<script>
+  const packages = [
+    {
+      id: "pq-basic",
+      destination: "Phu Quoc",
+      title: "PQ Stay + Play Basic",
+      hotel: "VinHolidays Fiesta Phu Quoc",
+      desc: "1-night hotel stay bundled with VinWonders Phu Quoc tickets for a family trip.",
+      retail: 4450000,
+      price: 3890000,
+      old: 4450000,
+      roomBase: 1550000,
+      adultTicket: 950000,
+      childTicket: 710000,
+      discountPct: 13,
+      savingPct: 13,
+      points: 3890,
+      imagePos: "center 34%",
+      items: ["Hotel 1 night", "VinWonders 1-day", "2 adults + 2 children", "QR vouchers"]
+    },
+    {
+      id: "pq-safari",
+      destination: "Phu Quoc",
+      title: "PQ Stay + Play Safari",
+      hotel: "Vinpearl Resort Phu Quoc",
+      desc: "Hotel plus Safari access with child-friendly ticket rules and expiry reminder.",
+      retail: 4980000,
+      price: 4290000,
+      old: 4980000,
+      roomBase: 1900000,
+      adultTicket: 850000,
+      childTicket: 650000,
+      discountPct: 14,
+      savingPct: 14,
+      points: 4290,
+      imagePos: "center 42%",
+      items: ["Hotel 1 night", "Safari tickets", "Family price", "Gate-ready QR"]
+    },
+    {
+      id: "pq-ultimate",
+      destination: "Phu Quoc",
+      title: "PQ Ultimate Family",
+      hotel: "Vinpearl Resort & Spa Phu Quoc",
+      desc: "The higher-AOV bundle: hotel, VinWonders, Safari, and resort F&B credit.",
+      retail: 7020000,
+      price: 5750000,
+      old: 7020000,
+      roomBase: 2460000,
+      adultTicket: 1800000,
+      childTicket: 1360000,
+      discountPct: 18,
+      savingPct: 18,
+      points: 5750,
+      imagePos: "center 52%",
+      items: ["Hotel 1 night", "VinWonders", "Safari", "F&B credit"]
+    },
+    {
+      id: "nt-play",
+      destination: "Nha Trang",
+      title: "NT Stay + Play",
+      hotel: "Vinpearl Resort & Spa Nha Trang Bay",
+      desc: "Nha Trang hotel package with VinWonders access and transparent savings.",
+      retail: 5360000,
+      price: 4690000,
+      old: 5360000,
+      roomBase: 2460000,
+      adultTicket: 950000,
+      childTicket: 710000,
+      discountPct: 12,
+      savingPct: 12,
+      points: 4690,
+      imagePos: "center 64%",
+      items: ["Hotel 1 night", "VinWonders Nha Trang", "2 adults + 2 children", "QR vouchers"]
+    },
+    {
+      id: "group-pass",
+      destination: "Phu Quoc",
+      title: "Corporate Group Pass",
+      hotel: "VinHolidays Fiesta Phu Quoc",
+      desc: "Bulk booking for company/tour groups with tour leader QR and settlement report.",
+      retail: 48000000,
+      price: 41800000,
+      old: 48000000,
+      savingPct: 13,
+      points: 41800,
+      groupOnly: true,
+      imagePos: "center 78%",
+      items: ["8 rooms", "24 pax tickets", "Bulk QR", "Invoice report"]
+    },
+    {
+      id: "group-plus",
+      destination: "Nha Trang",
+      title: "MICE Stay + Play",
+      hotel: "Vinpearl Nha Trang",
+      desc: "Group itinerary with rooming list, ticket allotment, and check-in progress view.",
+      retail: 62500000,
+      price: 54900000,
+      old: 62500000,
+      savingPct: 12,
+      points: 54900,
+      groupOnly: true,
+      imagePos: "center 88%",
+      items: ["12 rooms", "36 pax tickets", "Leader dashboard", "Gate manifest"]
+    }
+  ];
+
+  let selectedId = "pq-basic";
+  let mode = "family";
+  let bookingIssued = false;
+  const partyState = { adults: 2, children: 2, rooms: 1 };
+
+  const money = value => value.toLocaleString("vi-VN") + " VND";
+  const $ = selector => document.querySelector(selector);
+  const $$ = selector => document.querySelectorAll(selector);
+
+  function syncPartyUi() {
+    $("#adultCount").textContent = partyState.adults;
+    $("#childCount").textContent = partyState.children;
+    $("#roomCount").textContent = partyState.rooms;
+  }
+
+  function partyLabel() {
+    return `${partyState.rooms} room${partyState.rooms > 1 ? "s" : ""}, ${partyState.adults} adult${partyState.adults > 1 ? "s" : ""}, ${partyState.children} child${partyState.children !== 1 ? "ren" : ""}`;
+  }
+
+  function calcPackage(pkg) {
+    if (pkg.groupOnly) {
+      const pax = partyState.adults + partyState.children;
+      const retail = Math.round((pkg.retail / 24) * pax / 10000) * 10000;
+      const price = Math.round((pkg.price / 24) * pax / 10000) * 10000;
+      return {
+        retail,
+        price,
+        saving: retail - price,
+        points: Math.round(price / 1000),
+        adultTickets: pax,
+        childTickets: 0,
+        roomNights: partyState.rooms
+      };
+    }
+
+    const retail = (pkg.roomBase * partyState.rooms) + (pkg.adultTicket * partyState.adults) + (pkg.childTicket * partyState.children);
+    const price = Math.round((retail * (1 - pkg.discountPct / 100)) / 10000) * 10000;
+    return {
+      retail,
+      price,
+      saving: retail - price,
+      points: Math.round(price / 1000),
+      adultTickets: partyState.adults,
+      childTickets: partyState.children,
+      roomNights: partyState.rooms
+    };
+  }
+
+  function visiblePackages() {
+    const destination = $("#destination").value;
+    return packages.filter(pkg => {
+      if (pkg.destination !== destination) return false;
+      return mode === "group" ? pkg.groupOnly : !pkg.groupOnly;
+    });
+  }
+
+  function currentPackage() {
+    const visible = visiblePackages();
+    return packages.find(pkg => pkg.id === selectedId && visible.includes(pkg)) || visible[0] || packages[0];
+  }
+
+  function showToast(message) {
+    const toast = $("#toast");
+    toast.textContent = message;
+    toast.classList.add("show");
+    window.setTimeout(() => toast.classList.remove("show"), 1800);
+  }
+
+  function renderPackages() {
+    const grid = $("#packageGrid");
+    const list = visiblePackages();
+    if (!list.some(pkg => pkg.id === selectedId) && list[0]) selectedId = list[0].id;
+
+    grid.innerHTML = list.map(pkg => {
+      const calc = calcPackage(pkg);
+      return `
+      <article class="package-card">
+        <div class="media" style="--bg:url('screencapture-vinpearlota-en-2026-05-11-14_48_11.png'); background-position:${pkg.imagePos}">
+          <span class="badge">Stay + Play</span>
+          <span class="saving">Save ${pkg.savingPct}%</span>
+        </div>
+        <div class="package-body">
+          <div class="rating">★★★★★</div>
+          <h3>${pkg.title}</h3>
+          <p class="desc">${pkg.desc}</p>
+          <div class="included">${pkg.items.map(item => `<span class="pill">${item}</span>`).join("")}</div>
+          <div class="price-row">
+            <div>
+              <div class="old">${money(calc.retail)}</div>
+              <div class="price">${money(calc.price)}</div>
+              <div class="micro">All-or-nothing refund MVP · price revalidated at checkout</div>
+            </div>
+            <button class="choose ${pkg.id === selectedId ? "selected" : ""}" type="button" data-pick="${pkg.id}">
+              ${pkg.id === selectedId ? "Selected" : "Choose"}
+            </button>
+          </div>
+        </div>
+      </article>
+    `}).join("");
+
+    $$("[data-pick]").forEach(button => {
+      button.addEventListener("click", () => {
+        selectedId = button.dataset.pick;
+        bookingIssued = false;
+        renderAll();
+        showToast("Package selected");
+      });
+    });
+  }
+
+  function renderSummary() {
+    const pkg = currentPackage();
+    const calc = calcPackage(pkg);
+    $("#summaryIntro").textContent = `${pkg.hotel} · ${pkg.destination}`;
+    const ticketRows = pkg.groupOnly
+      ? [
+          `<div class="line"><span>Group manifest</span><strong>${calc.adultTickets} pax</strong></div>`,
+          `<div class="line"><span>Room block</span><strong>${calc.roomNights} rooms</strong></div>`
+        ]
+      : [
+          `<div class="line"><span>Hotel room entitlement</span><strong>${calc.roomNights} room${calc.roomNights > 1 ? "s" : ""}</strong></div>`,
+          `<div class="line"><span>Adult attraction tickets</span><strong>${calc.adultTickets}</strong></div>`,
+          `<div class="line"><span>Child attraction tickets</span><strong>${calc.childTickets}</strong></div>`
+        ];
+    $("#summaryLines").innerHTML = [
+      `<div class="line"><span>Party</span><strong>${pkg.groupOnly ? "Group booking" : partyLabel()}</strong></div>`,
+      ...ticketRows,
+      ...pkg.items.map(item => `<div class="line"><span>${item}</span><strong>Included</strong></div>`)
+    ].join("");
+    $("#retailValue").textContent = money(calc.retail);
+    $("#savingValue").textContent = money(calc.saving);
+    $("#pointValue").textContent = calc.points.toLocaleString("vi-VN") + " pts";
+    $("#totalValue").textContent = money(calc.price);
+    $("#checkoutBtn").disabled = false;
+  }
+
+  function renderDrawer(issued = false) {
+    const pkg = currentPackage();
+    const calc = calcPackage(pkg);
+    $("#drawerContent").innerHTML = issued ? `
+      <div class="checkout-card">
+        <h3>After checkout: what each QR is for</h3>
+        <div class="flow-explainer">
+          One payment creates <strong>1 Stay + Play itinerary</strong> and <strong>2 usable QR vouchers</strong>.
+          <br>Use <strong>hotel QR</strong> at reception and <strong>attraction QR</strong> at gate.
+          The itinerary QR is for trip lookup only.
+        </div>
+        <div class="qr-stack">
+          <div class="qr-card">
+            <h4>1) Itinerary QR (reference only)</h4>
+            <div class="qr-area">
+              <div class="qr" aria-label="Simulated itinerary QR code"></div>
+              <div>
+                <p><strong>Master booking:</strong> STP-${Math.floor(100000 + Math.random() * 899999)}</p>
+                <p><strong>Status:</strong> PAID → ISSUED</p>
+                <p><strong>When to use:</strong> Open trip details and view all sub-vouchers.</p>
+              </div>
+            </div>
+            <p class="qr-meta">This QR is not consumed at reception or gate.</p>
+          </div>
+          <div class="qr-card">
+            <h4>2) Hotel check-in QR</h4>
+            <div class="qr-area">
+              <div class="qr" aria-label="Simulated hotel booking QR code"></div>
+              <div>
+                <p><strong>Hotel booking:</strong> HTL-${Math.floor(100000 + Math.random() * 899999)}</p>
+                <p><strong>Guest/rooms:</strong> ${pkg.groupOnly ? `${calc.roomNights} rooms · ${calc.adultTickets} pax manifest` : partyLabel()}</p>
+                <p><strong>When to use:</strong> Show at hotel reception on check-in date.</p>
+              </div>
+            </div>
+            <p class="qr-meta">Hotel scan confirms accommodation only. Attraction tickets remain unused.</p>
+          </div>
+          <div class="qr-card">
+            <h4>3) Attraction gate QR</h4>
+            <div class="qr-area">
+              <div class="qr" aria-label="Simulated attraction QR code"></div>
+              <div>
+                <p><strong>Ticket voucher:</strong> TKT-${Math.floor(100000 + Math.random() * 899999)}</p>
+                <p><strong>Entitlement:</strong> ${pkg.groupOnly ? `${calc.adultTickets} group admissions` : `${calc.adultTickets} adult + ${calc.childTickets} child tickets`}</p>
+                <p><strong>When to use:</strong> Scan at VinWonders/Safari gate.</p>
+              </div>
+            </div>
+            <p class="qr-meta">First valid scan updates status to redeemed and blocks duplicate reuse.</p>
+          </div>
+        </div>
+      </div>
+      <div class="checkout-card">
+        <h3>Validity and status</h3>
+        <div class="voucher-list">
+          <div class="voucher"><span>Validity window</span><strong>${$("#checkin").value} to ${$("#checkout").value}</strong></div>
+          <div class="voucher"><span>Hotel sub-booking</span><strong>${calc.roomNights} room${calc.roomNights > 1 ? "s" : ""}</strong></div>
+          <div class="voucher"><span>Attraction sub-voucher</span><strong>${pkg.groupOnly ? `${calc.adultTickets} pax` : `${calc.adultTickets} adult + ${calc.childTickets} child`}</strong></div>
+          <div class="voucher"><span>Redemption tracking</span><strong>Not redeemed</strong></div>
+        </div>
+      </div>
+      <button class="checkout" type="button" id="redeemBtn">Simulate gate redeem</button>
+    ` : `
+      <div class="checkout-card">
+        <h3>${pkg.title}</h3>
+        <div class="line"><span>Party</span><strong>${pkg.groupOnly ? "Group booking" : partyLabel()}</strong></div>
+        <div class="line"><span>Ticket entitlement</span><strong>${pkg.groupOnly ? `${calc.adultTickets} pax` : `${calc.adultTickets} adult + ${calc.childTickets} child`}</strong></div>
+        <div class="line"><span>Retail value</span><strong>${money(calc.retail)}</strong></div>
+        <div class="line"><span>Package saving</span><strong>${money(calc.saving)}</strong></div>
+        <div class="line"><span>Total payment</span><strong>${money(calc.price)}</strong></div>
+        <div class="line"><span>VinClub earn</span><strong>${calc.points.toLocaleString("vi-VN")} pts</strong></div>
+      </div>
+      <div class="checkout-card">
+        <h3>Policy confirmation</h3>
+        <p>Phase 2 MVP uses all-or-nothing cancellation. Ticket QR cannot be reused after successful gate scan.</p>
+      </div>
+      <button class="checkout" type="button" id="payBtn">Pay and issue vouchers</button>
+    `;
+
+    const payBtn = $("#payBtn");
+    if (payBtn) {
+      payBtn.addEventListener("click", () => {
+        bookingIssued = true;
+        renderDrawer(true);
+        updateJourney(3);
+        showToast("Payment success. Vouchers issued.");
+      });
+    }
+
+    const redeemBtn = $("#redeemBtn");
+    if (redeemBtn) {
+      redeemBtn.addEventListener("click", () => {
+        updateJourney(4);
+        showToast("Gate redemption recorded");
+      });
+    }
+  }
+
+  function openDrawer(issued = false) {
+    renderDrawer(issued);
+    $("#drawer").classList.add("open");
+    $("#drawer").setAttribute("aria-hidden", "false");
+  }
+
+  function closeDrawer() {
+    $("#drawer").classList.remove("open");
+    $("#drawer").setAttribute("aria-hidden", "true");
+  }
+
+  function updateJourney(step) {
+    const labels = ["Ready", "Waiting", "Waiting", "Waiting"];
+    if (step >= 1) labels[0] = "Done";
+    if (step >= 2) labels[1] = "Done";
+    if (step >= 3) labels[2] = "Issued";
+    if (step >= 4) labels[3] = "Redeemed";
+    labels.forEach((text, index) => {
+      const el = $(`#s${index + 1}`);
+      el.textContent = text;
+      el.style.background = text === "Waiting" ? "#f0f4f8" : "#eaf9f6";
+      el.style.color = text === "Waiting" ? "#4b5d73" : "#047b69";
+    });
+  }
+
+  function renderAll() {
+    renderPackages();
+    renderSummary();
+  }
+
+  $$(".mode-switch button").forEach(button => {
+    button.addEventListener("click", () => {
+      mode = button.dataset.mode;
+      $$(".mode-switch button").forEach(item => item.classList.remove("active"));
+      button.classList.add("active");
+      $("#party").value = mode === "group" ? "group" : "family";
+      if (mode === "group") {
+        partyState.adults = 24;
+        partyState.children = 0;
+        partyState.rooms = 8;
+      } else {
+        partyState.adults = 2;
+        partyState.children = 2;
+        partyState.rooms = 1;
+      }
+      bookingIssued = false;
+      syncPartyUi();
+      renderAll();
+      showToast(mode === "group" ? "Group booking mode" : "Family booking mode");
+    });
+  });
+
+  $$(".destination").forEach(button => {
+    button.addEventListener("click", () => {
+      const value = button.dataset.destination;
+      if (value === "Phu Quoc" || value === "Nha Trang") {
+        $("#destination").value = value;
+        bookingIssued = false;
+        renderAll();
+        document.querySelector("#packages").scrollIntoView({ behavior: "smooth" });
+      } else {
+        showToast("Phase 2 pilot supports Phu Quoc and Nha Trang first");
+      }
+    });
+  });
+
+  $("#destination").addEventListener("change", () => {
+    bookingIssued = false;
+    renderAll();
+  });
+
+  $("#party").addEventListener("change", event => {
+    mode = event.target.value === "group" ? "group" : "family";
+    const presets = {
+      family: { adults: 2, children: 2, rooms: 1 },
+      "small-family": { adults: 2, children: 1, rooms: 1 },
+      couple: { adults: 2, children: 0, rooms: 1 },
+      group: { adults: 24, children: 0, rooms: 8 }
+    };
+    Object.assign(partyState, presets[event.target.value]);
+    $$(".mode-switch button").forEach(item => item.classList.toggle("active", item.dataset.mode === mode));
+    bookingIssued = false;
+    syncPartyUi();
+    renderAll();
+  });
+
+  $$("[data-counter]").forEach(button => {
+    button.addEventListener("click", () => {
+      const key = button.dataset.counter;
+      const delta = Number(button.dataset.delta);
+      const min = key === "children" ? 0 : 1;
+      const max = key === "rooms" ? 20 : 60;
+      partyState[key] = Math.max(min, Math.min(max, partyState[key] + delta));
+      mode = partyState.rooms >= 6 || partyState.adults + partyState.children >= 16 ? "group" : "family";
+      $("#party").value = mode === "group"
+        ? "group"
+        : partyState.children === 0
+          ? "couple"
+          : partyState.children === 1
+            ? "small-family"
+            : "family";
+      $$(".mode-switch button").forEach(item => item.classList.toggle("active", item.dataset.mode === mode));
+      bookingIssued = false;
+      syncPartyUi();
+      renderAll();
+    });
+  });
+
+  $("#checkoutBtn").addEventListener("click", () => {
+    updateJourney(2);
+    openDrawer(bookingIssued);
+  });
+
+  $("#closeDrawer").addEventListener("click", closeDrawer);
+  $("#drawer").addEventListener("click", event => {
+    if (event.target.id === "drawer") closeDrawer();
+  });
+
+  $("#searchBtn").addEventListener("click", () => {
+    document.querySelector("#packages").scrollIntoView({ behavior: "smooth" });
+    showToast("Eligible Stay + Play SKUs loaded");
+  });
+
+  $("#aiBtn").addEventListener("click", () => {
+    selectedId = mode === "group" ? "group-pass" : "pq-ultimate";
+    $("#destination").value = "Phu Quoc";
+    renderAll();
+    document.querySelector("#packages").scrollIntoView({ behavior: "smooth" });
+    showToast("V-AI selected the best value package");
+  });
+
+  $("#compareBtn").addEventListener("click", () => {
+    const pkg = currentPackage();
+    const calc = calcPackage(pkg);
+    showToast(`${pkg.title}: save ${money(calc.saving)} vs retail`);
+  });
+
+  $("#simulateBtn").addEventListener("click", () => {
+    updateJourney(3);
+    openDrawer(true);
+  });
+
+  $("#refreshBtn").addEventListener("click", () => {
+    $("#mAttach").textContent = (17 + Math.random() * 4).toFixed(1) + "%";
+    $("#mPay").textContent = (95 + Math.random() * 3).toFixed(1) + "%";
+    $("#mQr").textContent = (98 + Math.random() * 1.6).toFixed(1) + "%";
+    $("#mCs").textContent = (2.8 + Math.random() * 1.5).toFixed(1) + "%";
+    showToast("Pilot dashboard refreshed");
+  });
+
+  syncPartyUi();
+  renderAll();
+  updateJourney(1);
+</script>
+</body>
+</html>
